@@ -366,3 +366,123 @@ polyfills.ts:
     npm run start
 
     localhost:3000
+
+
+
+========================== MongoDB ===========================================
+1. Download va Install MongoDb
+    https://www.mongodb.com/
+    http://mongoosejs.com/docs/guide.html
+
+2. Run
+    mongod
+
+    mongo
+
+3. Mongoose
+    Schemas and Models
+    Validation
+    Intuitive Database operations
+
+    npm install --save mongoose
+    npm install --save mongoose-unique-validator
+
+4. Fix app.js
+
+    var mongoose = require("mongoose");
+
+    var appRoutes = require('./routes/app');
+    var app = express();
+
+    mongoose.connect("localhost:27017/node-angular");
+
+
+5. Creating schema
+    mkdir models
+    touch message.js, user.js
+
+message.js :
+
+    var mongoose = require("mongoose");
+    var Schema = mongoose.Schema;
+
+    var messageSchema = new Schema({
+        content: { type: String, required: true },
+        user: { type: Schema.Types.ObjectId, ref: "User" }
+    });
+
+    module.exports = mongoose.model("Message", messageSchema);
+
+
+user.js:
+
+    var mongoose = require("mongoose");
+    var Schema = mongoose.Schema;
+    var mongooseUniqueValid = require("mongoose-unique-validator");
+
+    var userSchema = new Schema({
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        password: { type:String, required: true },
+        email: { type: String, required: true, unique: true },
+        messages: [ { type: Schema.Types.ObjectId, ref: "Message" } ]
+    });
+
+    userSchema.plugin(mongooseUniqueValid);
+    module.exports = mongoose.model("User", userSchema);
+
+
+    /*
+         type: ObjectId # type: Schema.Types.ObjectId
+         + Id of this schema
+         + Id of all schema (can be id of userSchema)
+
+         ref: Tell mongoose reference to schema
+         plugin: using plugin to validator email
+     */
+
+
+6. Fixing router
+- Write down in: routes/app.js
+
+    router.get('/message', function (req, res, next) {
+        User.findOne({}, function(err, doc) {
+            if(err) {
+                return res.send("Error!");
+            }
+            res.render('message', {user: doc});
+        });
+    });
+
+    router.post('/message', function (req, res, next) {
+        var email = req.body.email;
+        var user = new User({
+            firstName: "Thieu",
+            lastName: "Nguyen",
+            password: "super-secret",
+            email: email
+        });
+
+        user.save();
+
+        res.redirect("/message");
+    });
+
+- Fixing views/message.js
+
+   <h1>A Nodejs View</h1>
+   {{ user }}
+
+   <form action="/message" method="post">
+       <input type="email" name="email">
+       <button type="submit">Submit</button>
+   </form>
+
+7. Run
+   npm run build
+   npm run start
+
+   mongo
+   use node-angular
+   db.users.find();
+
